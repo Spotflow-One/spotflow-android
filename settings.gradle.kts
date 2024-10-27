@@ -23,3 +23,4 @@ rootProject.name = "SpotFlow App"
 include(":app")
 include(":spotflowandroidlibrary")
 include(":SpotflowAndroid")
+include(":spotflow")
