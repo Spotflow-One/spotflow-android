@@ -1,4 +1,5 @@
 package com.spotflow.models
+
 import java.util.Date
 
 data class PaymentResponseBody(
@@ -15,7 +16,8 @@ data class PaymentResponseBody(
     val authorization: Authorization?,
     val createdAt: Date,
     val providerMessage: String?,
-    val bankDetails: BankDetails?
+    val bankDetails: BankDetails?,
+    val ussd: UssdResponse?,
 )
 
 data class Rate(
@@ -37,5 +39,9 @@ data class BankDetails(
 )
 
 
+data class UssdResponse(
+    val code: String,
+    val paymentCode: String
+)
 
 

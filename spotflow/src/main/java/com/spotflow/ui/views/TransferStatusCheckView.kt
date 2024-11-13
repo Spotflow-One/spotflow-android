@@ -20,40 +20,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toLowerCase
 import com.spotflow.ui.utils.PaymentCard
 import com.spotflow.ui.utils.PaymentOptionTile
 import com.spotflow.ui.utils.PciDssIcon
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.spotflow.R
+import com.spotflow.models.PaymentOptionsEnum
+import com.spotflow.models.PaymentResponseBody
+import com.spotflow.models.Rate
+import com.spotflow.models.SpotFlowPaymentManager
 import com.spotflow.ui.utils.CancelButton
 import com.spotflow.ui.utils.ChangePaymentButton
 import kotlinx.coroutines.Job
 import retrofit2.Call
 import retrofit2.Callback
-import java.util.*
+import java.util.Locale
 
 
 @Composable
 fun TransferStatusCheckPage(
-    paymentManager: com.spotflow.models.SpotFlowPaymentManager,
-    paymentResponseBody: com.spotflow.models.PaymentResponseBody,
-    rate: com.spotflow.models.Rate,
+    paymentManager: SpotFlowPaymentManager,
+    paymentResponseBody: PaymentResponseBody,
+    rate: Rate,
     onSuccessfulPayment: () -> Unit,
+    onFailedPayment: () -> Unit,
     onCancelButtonClicked: () -> Unit,
     onChangePaymentClicked: () -> Unit,
+    paymentOptionsEnum: PaymentOptionsEnum,
 ) {
     var remainingTime by remember { mutableStateOf("10:00") }
     val coroutineScope = rememberCoroutineScope()
-    var timerJob by remember { mutableStateOf<Job?>(null) }
 
     LaunchedEffect(Unit) {
-
         coroutineScope.launch {
             startPolling(
                 onSuccessfulPayment = onSuccessfulPayment,
                 paymentResponseBody = paymentResponseBody,
-                paymentManager = paymentManager
+                paymentManager = paymentManager,
+                onFailedPayment = onFailedPayment
             )
         }
 
@@ -75,13 +81,19 @@ fun TransferStatusCheckPage(
         Spacer(modifier = Modifier.height(16.dp))
 
         PaymentOptionTile(
-            title = "Pay with Transfer",
-            imageRes = R.drawable.pay_with_transfer_icon // Replace with actual resource
+            title = paymentOptionsEnum.title,
+            imageRes = paymentOptionsEnum.icon
         )
-        PaymentCard(paymentManager = paymentManager, rate = rate, amount = paymentResponseBody.amount)
+        PaymentCard(
+            paymentManager = paymentManager,
+            rate = rate,
+            amount = paymentResponseBody.amount
+        )
         Spacer(modifier = Modifier.height(70.dp))
+        val paymentText = if (paymentOptionsEnum != PaymentOptionsEnum.TRANSFER) "payment" else ""
+
         Text(
-            text = "We’re waiting to confirm your transfer. This can take a few minutes",
+            text = "We’re waiting to confirm your ${paymentOptionsEnum.name.lowercase(Locale.getDefault())} ${paymentText}. This can take a few minutes",
             textAlign = TextAlign.Center,
             fontSize = 16.sp,
             fontWeight = FontWeight.Normal,
@@ -159,24 +171,27 @@ fun TransferStatusCheckPage(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = { /* Navigate to ViewBankDetailsPage */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 32.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-        ) {
-            Text(
-                text = "Show account number",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color(0xFF55515B),
-                modifier = Modifier.padding(vertical = 10.dp)
+        if (paymentOptionsEnum == PaymentOptionsEnum.TRANSFER) {
+            Button(
+                onClick = { /* Navigate to ViewBankDetailsPage */ },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+            ) {
+                Text(
+                    text = "Show account number",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color(0xFF55515B),
+                    modifier = Modifier.padding(vertical = 10.dp)
 
 
-            )
+                )
+            }
         }
+
 
         Spacer(modifier = Modifier.weight(1f))
 
@@ -227,32 +242,36 @@ suspend fun startCountDown(onTimeUpdate: (String) -> Unit) {
 }
 
 suspend fun startPolling(
-    paymentManager: com.spotflow.models.SpotFlowPaymentManager,
-    paymentResponseBody: com.spotflow.models.PaymentResponseBody,
+    paymentManager: SpotFlowPaymentManager,
+    paymentResponseBody: PaymentResponseBody,
     onSuccessfulPayment: () -> Unit,
-) {
+    onFailedPayment: () -> Unit,
+
+    ) {
     val pollingInterval = 2 * 1000L // 2 minutes in milliseconds
     verifyPayment(
         paymentManager = paymentManager,
         paymentResponseBody = paymentResponseBody,
-        onSuccessfulPayment = onSuccessfulPayment
+        onSuccessfulPayment = onSuccessfulPayment,
+        onFailedPayment = onFailedPayment,
     )// seconds
     while (true) {
         delay(pollingInterval)
         // Call the function to verify payment
-       verifyPayment(
+        verifyPayment(
             paymentManager = paymentManager,
             paymentResponseBody = paymentResponseBody,
-            onSuccessfulPayment = onSuccessfulPayment
+            onSuccessfulPayment = onSuccessfulPayment,
+            onFailedPayment = onFailedPayment
         )
-
     }
 }
 
 fun verifyPayment(
-    paymentManager: com.spotflow.models.SpotFlowPaymentManager,
-    paymentResponseBody: com.spotflow.models.PaymentResponseBody,
+    paymentManager: SpotFlowPaymentManager,
+    paymentResponseBody: PaymentResponseBody,
     onSuccessfulPayment: () -> Unit,
+    onFailedPayment: () -> Unit,
 ) {
     Log.d("verifyPayment", "verifyPayment")
     val authToken = paymentManager.key
@@ -265,26 +284,27 @@ fun verifyPayment(
             reference = paymentResponseBody.reference
         )
     // on below line we are executing our method.
-    call!!.enqueue(object : Callback<com.spotflow.models.PaymentResponseBody?> {
+    call!!.enqueue(object : Callback<PaymentResponseBody?> {
         override fun onResponse(
-            call: Call<com.spotflow.models.PaymentResponseBody?>,
-            response: retrofit2.Response<com.spotflow.models.PaymentResponseBody?>
+            call: Call<PaymentResponseBody?>,
+            response: retrofit2.Response<PaymentResponseBody?>
         ) {
             // this method is called when we get response from our api.
 
-            println(response.code())
             if (response.code() == 200) {
                 // we are getting a response from our body and
                 // passing it to our model class.
-                val model: com.spotflow.models.PaymentResponseBody? = response.body()
+                val model: PaymentResponseBody? = response.body()
                 if (model?.status == "successful") {
                     onSuccessfulPayment.invoke()
+                } else if (model?.status == "failed") {
+                    onFailedPayment.invoke()
                 }
             }
         }
 
-        override fun onFailure(call: Call<com.spotflow.models.PaymentResponseBody?>, t: Throwable) {
-
+        override fun onFailure(call: Call<PaymentResponseBody?>, t: Throwable) {
+            onFailedPayment.invoke()
         }
     })
 }

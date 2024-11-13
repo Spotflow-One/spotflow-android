@@ -1,6 +1,7 @@
 package com.spotflow.ui
 
 import androidx.lifecycle.ViewModel
+import com.spotflow.models.Bank
 import com.spotflow.models.SpotFlowPaymentManager
 
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,10 +40,21 @@ class SpotFlowViewModel(paymentManager: SpotFlowPaymentManager) : ViewModel() {
         }
     }
 
+    fun setBank(bank: Bank) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                bank = bank,
+            )
+        }
+    }
+
 
     fun resetPayment() {
         _uiState.value =
-            com.spotflow.models.SpotFlowUIState(paymentManager = _uiState.value.paymentManager, merchantConfig = _uiState.value.merchantConfig)
+            com.spotflow.models.SpotFlowUIState(
+                paymentManager = _uiState.value.paymentManager,
+                merchantConfig = _uiState.value.merchantConfig
+            )
     }
 
 }

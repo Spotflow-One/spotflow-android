@@ -33,7 +33,7 @@ interface PaymentApi {
     @POST("api/v1/payments/authorize")
     fun authorizeAvsPayment(@Body body: AvsPaymentRequestBody?): Call<PaymentResponseBody?>?
 
-    @POST("api/v1/payments/validate")
+    @POST("api/v1/payments/authorize")
       fun validatePayment(@Body body: ValidatePaymentRequestBody?): Call<PaymentResponseBody?>?
 
     @GET("api/v1/payments/verify")
@@ -50,7 +50,7 @@ interface PaymentApi {
 
 
     @GET("api/v1/banks")
-    fun getBanks(@Query("ussd") ussd: Boolean) : Call<BankResponse>
+    fun getBanks(@Query("ussd") ussd: Boolean) : Call<List<Bank>>
 }
 
 

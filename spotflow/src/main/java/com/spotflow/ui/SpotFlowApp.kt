@@ -49,74 +49,57 @@ fun SpotFlowApp(
     navController: NavHostController = rememberNavController(),
     closeSpotflow: () -> Unit
 ) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("") },
-                modifier = Modifier.height(70.dp),
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
-                    containerColor = Color(0xFFF4F4FF)
-                ),
-                navigationIcon = {
-                    Image(
-                        painter = painterResource(R.drawable.nba_logo),
-                        contentDescription = null,
-                        modifier = Modifier.width(100.dp).height(100.dp)
-                            .fillMaxHeight()
-                            .padding(top = 17.dp, start = 14.dp, bottom = 5.dp)
-                    )
-                }
-            )
-        }
-    ) { innerPadding ->
+    Scaffold(topBar = {
+        TopAppBar(title = { Text("") },
+            modifier = Modifier.height(70.dp),
+            colors = TopAppBarDefaults.mediumTopAppBarColors(
+                containerColor = Color(0xFFF4F4FF)
+            ),
+            navigationIcon = {
+                Image(
+                    painter = painterResource(R.drawable.nba_logo),
+                    contentDescription = null,
+                    modifier = Modifier.width(100.dp).height(100.dp).fillMaxHeight()
+                        .padding(top = 17.dp, start = 14.dp, bottom = 5.dp)
+                )
+            })
+    }) { innerPadding ->
 
         val uiState by viewModel.uiState.collectAsState()
 
         NavHost(
             navController = navController,
             startDestination = SpotFlowScreen.HomeView.name,
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                 .padding(innerPadding)
         ) {
             composable(route = SpotFlowScreen.HomeView.name) {
-                HomeView(
-                    paymentManager = uiState.paymentManager,
-                    onPayWithTransferClicked = {
-                        viewModel.setPaymentOptionEnum(PaymentOptionsEnum.TRANSFER)
-                        navController.navigate(SpotFlowScreen.TransferHomeView.name)
-                    },
-                    onPayWithCardClicked = {
-                        viewModel.setPaymentOptionEnum(PaymentOptionsEnum.CARD)
+                HomeView(paymentManager = uiState.paymentManager, onPayWithTransferClicked = {
+                    viewModel.setPaymentOptionEnum(PaymentOptionsEnum.TRANSFER)
+                    navController.navigate(SpotFlowScreen.TransferHomeView.name)
+                }, onPayWithCardClicked = {
+                    viewModel.setPaymentOptionEnum(PaymentOptionsEnum.CARD)
 
-                        navController.navigate(SpotFlowScreen.EnterCardDetailsView.name)
-                    },
-                    onPayWithUSSDClicked = {
-                        viewModel.setPaymentOptionEnum(PaymentOptionsEnum.USSD)
-                        navController.navigate(SpotFlowScreen.UssdView.name)
+                    navController.navigate(SpotFlowScreen.EnterCardDetailsView.name)
+                }, onPayWithUSSDClicked = {
+                    viewModel.setPaymentOptionEnum(PaymentOptionsEnum.USSD)
+                    navController.navigate(SpotFlowScreen.UssdView.name)
 
-                    },
-                    onCancelButtonClicked = {
-                        closeSpotflow()
-                    },
-                    onRateFetched = {
-                        viewModel.setMerchantConfig(it)
-                    }
-                )
+                }, onCancelButtonClicked = {
+                    closeSpotflow()
+                }, onRateFetched = {
+                    viewModel.setMerchantConfig(it)
+                })
             }
 
-            composable(route = SpotFlowScreen.EnterCardBillingAddress.name)
-            {
-                EnterBillingAddressPage(
-                    paymentManager = uiState.paymentManager,
+            composable(route = SpotFlowScreen.EnterCardBillingAddress.name) {
+                EnterBillingAddressPage(paymentManager = uiState.paymentManager,
                     paymentResponseBody = uiState.paymentResponseBody!!,
                     rate = uiState.rate,
                     onSuccessfulPayment = {
                         viewModel.setPaymentResponseBody(it)
                         handleCardSuccessResponse(navController, viewModel)
-                    }
-                )
+                    })
             }
             composable(route = SpotFlowScreen.TransferHomeView.name) {
                 TransferHomeView(
@@ -144,7 +127,11 @@ fun SpotFlowApp(
                     onCancelButtonClicked = {
                         closeSpotflow()
                     },
-                    amonut = uiState.amount,
+                    amount = uiState.amount,
+                    createPayment = {
+                        viewModel.setBank(it)
+                        navController.navigate(SpotFlowScreen.CopyUssdView.name)
+                    },
                     onChangePaymentClicked = {
                         changePayment(navController = navController, viewModel = viewModel)
                     },
@@ -153,25 +140,17 @@ fun SpotFlowApp(
 
 
             composable(route = SpotFlowScreen.TransferInfoView.name) {
-                TransferInfoView(
-                    paymentManager = uiState.paymentManager,
-                    onChangePaymentClicked = {
-                        changePayment(navController = navController, viewModel = viewModel)
-                    },
-                    onCancelButtonClicked = {
-                        closeSpotflow()
-                    },
-                    rate = uiState.rate,
-                    amount = uiState.amount,
-                    onKeepWaitingClicked = {
-                        navController.navigate(SpotFlowScreen.TransferStatusCheckView.name)
-                    }
-                )
+                TransferInfoView(paymentManager = uiState.paymentManager, onChangePaymentClicked = {
+                    changePayment(navController = navController, viewModel = viewModel)
+                }, onCancelButtonClicked = {
+                    closeSpotflow()
+                }, rate = uiState.rate, amount = uiState.amount, onKeepWaitingClicked = {
+                    navController.navigate(SpotFlowScreen.TransferStatusCheckView.name)
+                })
             }
 
             composable(route = SpotFlowScreen.TransferStatusCheckView.name) {
-                TransferStatusCheckPage(
-                    paymentManager = uiState.paymentManager,
+                TransferStatusCheckPage(paymentManager = uiState.paymentManager,
                     onChangePaymentClicked = {
                         changePayment(navController = navController, viewModel = viewModel)
                     },
@@ -180,15 +159,17 @@ fun SpotFlowApp(
                     },
                     rate = uiState.rate,
                     paymentResponseBody = uiState.paymentResponseBody!!,
+                    paymentOptionsEnum = uiState.paymentOptionsEnum!!,
                     onSuccessfulPayment = {
                         navController.navigate(SpotFlowScreen.SuccessView.name)
-                    }
-                )
+                    },
+                    onFailedPayment = {
+                        navController.navigate(SpotFlowScreen.ErrorView.name)
+                    })
             }
 
             composable(route = SpotFlowScreen.SuccessView.name) {
-                SuccessPage(
-                    paymentManager = uiState.paymentManager,
+                SuccessPage(paymentManager = uiState.paymentManager,
                     paymentOptionsEnum = uiState.paymentOptionsEnum!!,
                     rate = uiState.rate,
                     successMessage = "Payment successful",
@@ -201,8 +182,7 @@ fun SpotFlowApp(
             }
 
             composable(route = SpotFlowScreen.EnterCardDetailsView.name) {
-                EnterCardDetail(
-                    paymentManager = uiState.paymentManager,
+                EnterCardDetail(paymentManager = uiState.paymentManager,
                     rate = uiState.merchantConfig!!.rate,
                     onChangePaymentClicked = {
                         changePayment(navController = navController, viewModel = viewModel)
@@ -235,8 +215,7 @@ fun SpotFlowApp(
 
 
             composable(route = SpotFlowScreen.EnterCardPinView.name) {
-                EnterCardPin(
-                    paymentManager = uiState.paymentManager,
+                EnterCardPin(paymentManager = uiState.paymentManager,
                     paymentResponseBody = uiState.paymentResponseBody!!,
                     onCancelButtonClicked = {
                         closeSpotflow()
@@ -275,10 +254,9 @@ fun SpotFlowApp(
             composable(
                 route = SpotFlowScreen.WebView.name
             ) {
-                WebViewPage(
-                    url = uiState.paymentResponseBody?.authorization?.redirectUrl ?: "",
-                    onPageStarted = {
-
+                WebViewPage(url = uiState.paymentResponseBody?.authorization?.redirectUrl ?: "",
+                    onComplete = {
+                        navController.navigate(SpotFlowScreen.TransferStatusCheckView.name)
                     })
             }
             composable(
@@ -287,20 +265,20 @@ fun SpotFlowApp(
                 CopyUssdCodePage(
                     paymentManager = uiState.paymentManager,
                     rate = uiState.rate,
-                    paymentResponseBody = uiState.paymentResponseBody!!,
                     onCancelButtonClicked = {
                         closeSpotflow()
                     },
                     onConfirmPayment = {
+                        viewModel.setPaymentResponseBody(it)
                         navController.navigate(SpotFlowScreen.TransferStatusCheckView.name)
                     },
                     onChangePaymentClicked = {
                         changePayment(navController = navController, viewModel = viewModel)
-                    }
+                    },
+                    bank = uiState.bank!!,
+                    merchantConfig = uiState.merchantConfig!!,
                 )
             }
-
-
         }
     }
 }

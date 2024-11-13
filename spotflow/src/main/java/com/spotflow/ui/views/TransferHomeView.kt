@@ -92,7 +92,7 @@ fun TransferHomeView(
         }
 
     } else {
-        if (paymentResponse.value?.status != "success") {
+        if (paymentResponse.value?.status == "failed") {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

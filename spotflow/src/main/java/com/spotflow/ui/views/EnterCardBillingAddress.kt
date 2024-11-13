@@ -39,7 +39,6 @@ import com.spotflow.models.CountryState
 import com.spotflow.models.PaymentResponseBody
 import com.spotflow.models.Rate
 import com.spotflow.models.SpotFlowPaymentManager
-import com.spotflow.models.examplePaymentManager
 import com.spotflow.ui.utils.BottomSheetWithSearch
 import com.spotflow.ui.utils.CancelButton
 import com.spotflow.ui.utils.CardDropdown
@@ -161,7 +160,7 @@ fun BillingAddressContent(
         )
 
         PaymentCard(
-            paymentManager = examplePaymentManager,
+            paymentManager = paymentManager,
             rate = rate,
             amount = paymentResponseBody.amount,
         )

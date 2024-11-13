@@ -25,10 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.spotflow.R
-import com.spotflow.models.BankResponse
 import com.spotflow.models.SpotFlowPaymentManager
 import com.spotflow.ui.utils.CancelButton
-import com.spotflow.ui.utils.ChangePaymentButton
 import com.spotflow.ui.utils.PaymentCard
 import com.spotflow.ui.utils.PaymentOptionTile
 import com.spotflow.ui.utils.PciDssIcon
@@ -88,7 +86,11 @@ fun HomeView(
 
             ) {
 
-            PaymentCard(paymentManager = paymentManager, rate = merchantConfig.value!!.rate, amount = merchantConfig.value!!.plan.amount)
+            PaymentCard(
+                paymentManager = paymentManager,
+                rate = merchantConfig.value!!.rate,
+                amount = merchantConfig.value!!.plan.amount
+            )
 
             merchantConfig.value?.rate?.let {
                 val amount = it.rate * merchantConfig.value!!.plan.amount.toDouble()
@@ -177,7 +179,6 @@ private fun getRate(
     val retrofit = com.spotflow.core.ApiClient.getRetrofit(authToken)
     val apiService = retrofit.create(com.spotflow.core.PaymentApi::class.java)
 
-    getBanks(paymentManager)
     loading.value = true
     val call =
         apiService.getMerchantConfig(planId = paymentManager.planId)
@@ -210,26 +211,4 @@ private fun getRate(
     })
 }
 
-
-private fun getBanks(paymentManager: SpotFlowPaymentManager) {
-    val authToken = paymentManager.key
-    val retrofit = com.spotflow.core.ApiClient.getRetrofit(authToken)
-    val apiService = retrofit.create(com.spotflow.core.PaymentApi::class.java)
-    val call = apiService.getBanks(ussd = true)
-
-    // on below line we are executing our method.
-    call!!.enqueue(object : Callback<BankResponse?> {
-        override fun onResponse(
-            call: Call<BankResponse?>,
-            response: retrofit2.Response<BankResponse?>
-        ) {
-            // this method is called when we get response from our api.
-            println()
-        }
-
-        override fun onFailure(call: Call<BankResponse?>, t: Throwable) {
-
-        }
-    })
-}
 
