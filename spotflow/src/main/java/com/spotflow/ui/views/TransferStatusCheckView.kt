@@ -280,7 +280,6 @@ fun verifyPayment(
 
     val call =
         apiService.verifyPayment(
-            merchantId = paymentManager.merchantId,
             reference = paymentResponseBody.reference
         )
     // on below line we are executing our method.

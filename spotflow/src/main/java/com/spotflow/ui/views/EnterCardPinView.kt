@@ -129,12 +129,10 @@ private fun submitCardPin(
         authorization = com.spotflow.models.AuthorizePaymentAuthorization(
             pin = pin,
         ),
-        merchantId = paymentManager.merchantId,
         reference = paymentResponseBody.reference
     )
 
 
-    5531886652142950
     loading.value = true
     val call =
         apiService.authorizePayment(authorizePaymentRequestBody)

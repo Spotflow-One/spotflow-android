@@ -8,6 +8,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.spotflow.models.SpotFlowPaymentManager
+import com.spotflow.ui.SpotFlowApp
 import com.spotflow.ui.SpotFlowViewModel
 
 class SpotFlowPaymentActivity : ComponentActivity() {
@@ -15,7 +16,6 @@ class SpotFlowPaymentActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val merchantId = intent.getStringExtra("merchantId") ?: ""
         val key = intent.getStringExtra("key") ?: ""
         val encryptionKey = intent.getStringExtra("encryptionKey") ?: ""
         val customerEmail = intent.getStringExtra("customerEmail") ?: ""
@@ -25,10 +25,14 @@ class SpotFlowPaymentActivity : ComponentActivity() {
         val paymentDescription = intent.getStringExtra("paymentDescription")
         val appLogo = intent.getIntExtra("appLogo", 0)
         val appName = intent.getStringExtra("appName")
+        val amount: Double? = intent.getDoubleExtra("amount", -1.0)
 
-        val planId = intent.getStringExtra("planId") ?: ""
+        if (amount != null && amount <= 0) {
+            throw IllegalArgumentException("Amount can't be null and must be greater than 0")
+        }
 
-        5531886652142950
+        val planId = intent.getStringExtra("planId")
+
         val onSuccess: (String, Map<String, Any>) -> Unit = { transactionId, paymentData ->
             setResult(RESULT_OK, Intent().apply {
                 putExtra("transactionId", transactionId)
@@ -45,7 +49,6 @@ class SpotFlowPaymentActivity : ComponentActivity() {
         }
 
         val paymentManager = SpotFlowPaymentManager(
-            merchantId = merchantId,
             key = key,
             encryptionKey = encryptionKey,
             paymentDescription = paymentDescription,
@@ -53,13 +56,14 @@ class SpotFlowPaymentActivity : ComponentActivity() {
             customerName = customerName,
             customerEmail = customerEmail,
             customerId = customerId,
-            planId = planId,
+            planId = null,
             appLogo = appLogo,
-            appName = appName
-        );
+            appName = appName,
+            amount = amount!!
+        )
 
         setContent {
-            com.spotflow.ui.SpotFlowApp(
+         SpotFlowApp(
                 viewModel = SpotFlowViewModel(paymentManager = paymentManager),
                 closeSpotflow = {
                     finish()
@@ -75,7 +79,6 @@ class SpotFlowPaymentActivity : ComponentActivity() {
             requestCode: Int,
         ) {
             val intent = Intent(context, SpotFlowPaymentActivity::class.java).apply {
-                putExtra("merchantId", paymentManager.merchantId)
                 putExtra("planId", paymentManager.planId)
                 putExtra("key", paymentManager.key)
                 putExtra("customerEmail", paymentManager.customerEmail)
@@ -86,7 +89,7 @@ class SpotFlowPaymentActivity : ComponentActivity() {
                 putExtra("appLogo", paymentManager.appLogo)
                 putExtra("appName", paymentManager.appName)
                 putExtra("encryptionKey", paymentManager.encryptionKey)
-
+                putExtra("amount", paymentManager.amount)
             }
             if (context is Activity) {
                 context.startActivityForResult(intent, requestCode)

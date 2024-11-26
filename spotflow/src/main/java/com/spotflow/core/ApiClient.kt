@@ -38,7 +38,6 @@ interface PaymentApi {
 
     @GET("api/v1/payments/verify")
       fun verifyPayment(
-        @Query("merchantId") merchantId: String?,
         @Query("reference") reference: String?
     ): Call<PaymentResponseBody?>?
 

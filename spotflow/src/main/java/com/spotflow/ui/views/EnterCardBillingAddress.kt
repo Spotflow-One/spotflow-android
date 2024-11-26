@@ -305,7 +305,6 @@ fun BillingAddressContent(
                                 zipCode = zipCode,
                             )
                         ),
-                        merchantId = paymentResponseBody.id
                     )
 
                     submitAddressDetails(

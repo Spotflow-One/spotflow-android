@@ -177,7 +177,6 @@ private fun submitCardOtp(
 
 
     val validatePaymentRequestBody = com.spotflow.models.ValidatePaymentRequestBody(
-        merchantId = paymentManager.merchantId,
         reference = paymentResponseBody.reference,
         authorization = com.spotflow.models.ValidatePaymentAuthorization(otp = otp)
     )

@@ -2,8 +2,11 @@ package com.spotflow.ui
 
 import androidx.lifecycle.ViewModel
 import com.spotflow.models.Bank
+import com.spotflow.models.MerchantConfig
+import com.spotflow.models.PaymentOptionsEnum
+import com.spotflow.models.PaymentResponseBody
 import com.spotflow.models.SpotFlowPaymentManager
-
+import com.spotflow.models.SpotFlowUIState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,13 +17,13 @@ class SpotFlowViewModel(paymentManager: SpotFlowPaymentManager) : ViewModel() {
 
 
     private val _uiState = MutableStateFlow(
-        com.spotflow.models.SpotFlowUIState(
+        SpotFlowUIState(
             paymentManager = paymentManager
         )
     )
-    val uiState: StateFlow<com.spotflow.models.SpotFlowUIState> = _uiState.asStateFlow()
+    val uiState: StateFlow<SpotFlowUIState> = _uiState.asStateFlow()
 
-    fun setMerchantConfig(merchantConfig: com.spotflow.models.MerchantConfig) {
+    fun setMerchantConfig(merchantConfig: MerchantConfig) {
         _uiState.update { currentState ->
             currentState.copy(
                 merchantConfig = merchantConfig,
@@ -28,13 +31,13 @@ class SpotFlowViewModel(paymentManager: SpotFlowPaymentManager) : ViewModel() {
         }
     }
 
-    fun setPaymentResponseBody(paymentResponseBody: com.spotflow.models.PaymentResponseBody) {
+    fun setPaymentResponseBody(paymentResponseBody: PaymentResponseBody) {
         _uiState.update { currentState ->
             currentState.copy(paymentResponseBody = paymentResponseBody)
         }
     }
 
-    fun setPaymentOptionEnum(paymentOptionsEnum: com.spotflow.models.PaymentOptionsEnum) {
+    fun setPaymentOptionEnum(paymentOptionsEnum: PaymentOptionsEnum) {
         _uiState.update { currentState ->
             currentState.copy(paymentOptionsEnum = paymentOptionsEnum)
         }

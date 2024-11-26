@@ -56,17 +56,18 @@ fun TransferHomeView(
         remember { mutableStateOf(null) }
     val loading: MutableState<Boolean> = remember { mutableStateOf(false) }
 
-    val amount = merchantConfig.plan.amount.toDouble()
+    val amount = merchantConfig.plan?.amount?.toDouble() ?: paymentManager.amount?.toDouble()
     val rate = merchantConfig.rate
-    var formattedAmount: String? = null
-    var converteedAmount: Double? = null
+    val formattedAmount: String?
+    val convertedAmount: Double?
     val numberFormatter: NumberFormat = NumberFormat.getInstance(Locale.getDefault()).apply {
         maximumFractionDigits = 2
         minimumFractionDigits = 2
     }
-    converteedAmount = rate.rate * amount
+    convertedAmount = rate.rate * amount!!
     formattedAmount =
-        "${rate.to} ${numberFormatter.format(amount)}"
+        "${rate.to} ${numberFormatter.format(convertedAmount)}"
+
 
     LaunchedEffect(Unit) {
         createPayment(

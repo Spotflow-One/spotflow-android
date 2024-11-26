@@ -265,14 +265,19 @@ private fun createPayment(
     loading: MutableState<Boolean>,
     paymentResponse: MutableState<PaymentResponseBody?>,
 ) {
+
+    val amount = merchantConfig.plan?.amount?.toDouble() ?: paymentManager.amount?.toDouble()
     val authToken = paymentManager.key
     val retrofit = com.spotflow.core.ApiClient.getRetrofit(authToken)
     val apiService = retrofit.create(com.spotflow.core.PaymentApi::class.java)
 
+    if(amount == null) {
+        return
+    }
     val paymentRequestBody = PaymentRequestBody(
         customer = paymentManager.customer,
         currency = merchantConfig.rate.to,
-        amount = merchantConfig.plan.amount.toDouble(),
+        amount = amount,
         channel = "ussd",
         bank = BankRequestBody(code = bankCode)
     )

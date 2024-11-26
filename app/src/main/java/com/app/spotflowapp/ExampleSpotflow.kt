@@ -27,32 +27,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 
-//
-//@Composable
-//fun exampleSpotflow() {
-//    val context = LocalContext.current
-//
-//    Column {
-//        Button(
-//            onClick = {
-//
-//            },
-//            modifier = Modifier
-//                .padding(horizontal = 16.dp)
-//                .padding(top = 121.dp)
-//                .fillMaxWidth(),
-//            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-//        ) {
-//            Text(
-//                text = "Start payment",
-//                fontSize = 14.sp,
-//                fontWeight = FontWeight.Medium,
-//                color = Color(0xFF3D3844)
-//            )
-//        }
-//    }
-//}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +35,6 @@ fun MyHomePage(title: String) {
 
     var email by remember { mutableStateOf(TextFieldValue("jon@snow.com")) }
     var planId by remember { mutableStateOf(TextFieldValue("")) }
-    var merchantId by remember { mutableStateOf(TextFieldValue("")) }
     var merchantKey by remember { mutableStateOf(TextFieldValue("")) }
     var encryptionKey by remember { mutableStateOf(TextFieldValue("")) }
     var paymentDescription by remember { mutableStateOf(TextFieldValue("League Pass")) }
@@ -114,15 +87,6 @@ fun MyHomePage(title: String) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = merchantId,
-                onValueChange = { merchantId = it },
-                label = { Text("Merchant ID") },
-                placeholder = { Text("merchant id") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
                 value = merchantKey,
@@ -156,17 +120,20 @@ fun MyHomePage(title: String) {
 
             Button(
                 onClick = {
-                    if (email.text.isEmpty() || planId.text.isEmpty() || merchantId.text.isEmpty() ||
+                    if (email.text.isEmpty() || planId.text.isEmpty() ||
                         merchantKey.text.isEmpty() || encryptionKey.text.isEmpty()
                     ) {
-                        Toast.makeText(context, "Please enter all required fields.", Toast.LENGTH_SHORT)
+                        Toast.makeText(
+                            context,
+                            "Please enter all required fields.",
+                            Toast.LENGTH_SHORT
+                        )
                             .show()
 
                     } else {
                         startPayment(
                             context,
                             email.text,
-                            merchantId.text,
                             merchantKey.text,
                             encryptionKey.text,
                             paymentDescription.text,
@@ -195,7 +162,6 @@ fun MyHomePage(title: String) {
 private fun startPayment(
     context: Context,
     email: String,
-    merchantId: String,
     merchantKey: String,
     encryptionKey: String,
     paymentDescription: String,
@@ -203,13 +169,13 @@ private fun startPayment(
 ) {
     val paymentManger = SpotFlowPaymentManager(
         customerEmail = email,
-        merchantId = merchantId,
         key = merchantKey,
         encryptionKey = encryptionKey,
         planId = planId,
         paymentDescription = paymentDescription,
         appName = "NBA",
         customerName = "Test user",
+        amount = 5
     )
     SpotFlowPaymentActivity.start(
         context = context,
@@ -217,6 +183,7 @@ private fun startPayment(
         requestCode = 200,
     )
 }
+
 
 @Preview(showBackground = true)
 @Composable

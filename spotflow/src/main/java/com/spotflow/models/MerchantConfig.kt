@@ -3,7 +3,7 @@ package com.spotflow.models
      val merchantLogo: String,
      val merchantName: String,
      val paymentMethods: List<String>,
-     val plan: SpotFlowPlan,
+     val plan: SpotFlowPlan? = null,
      val rate: Rate,
 )
 

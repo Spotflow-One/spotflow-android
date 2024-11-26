@@ -7,7 +7,7 @@ data class SpotFlowUIState(
     val paymentOptionsEnum: PaymentOptionsEnum? = null,
     val bank: Bank? = null
 ) {
-    val amount: Number get() = merchantConfig!!.plan.amount
+    val amount: Number get() = merchantConfig?.plan?.amount ?: paymentManager.amount
     val rate: Rate
         get() = merchantConfig!!.rate
 }

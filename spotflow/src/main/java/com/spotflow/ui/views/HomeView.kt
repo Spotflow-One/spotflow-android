@@ -25,6 +25,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.spotflow.R
+import com.spotflow.core.ApiClient
+import com.spotflow.core.PaymentApi
+import com.spotflow.models.MerchantConfig
 import com.spotflow.models.SpotFlowPaymentManager
 import com.spotflow.ui.utils.CancelButton
 import com.spotflow.ui.utils.PaymentCard
@@ -43,12 +46,14 @@ fun HomeView(
     onPayWithTransferClicked: () -> Unit,
     onPayWithUSSDClicked: () -> Unit,
     onCancelButtonClicked: () -> Unit,
-    onRateFetched: (rate: com.spotflow.models.MerchantConfig) -> Unit
+    onRateFetched: (rate: MerchantConfig) -> Unit
 ) {
 
-    val merchantConfig: MutableState<com.spotflow.models.MerchantConfig?> =
+    val merchantConfig: MutableState<MerchantConfig?> =
         remember { mutableStateOf(null) }
     val loading: MutableState<Boolean> = remember { mutableStateOf(false) }
+    val amount = merchantConfig.value?.plan?.amount ?: paymentManager.amount
+
 
     LaunchedEffect(Unit) {
         getRate(
@@ -58,6 +63,8 @@ fun HomeView(
             onRateFetched = onRateFetched
         )
     }
+
+
 
 
     if (loading.value || merchantConfig.value == null) {
@@ -83,85 +90,83 @@ fun HomeView(
                 .fillMaxSize()
                 .padding(0.dp),
             horizontalAlignment = Alignment.Start,
+        ) {
 
-            ) {
+            if (amount != null) {
+                PaymentCard(
+                    paymentManager = paymentManager,
+                    rate = merchantConfig.value!!.rate,
+                    amount = amount
+                )
 
-            PaymentCard(
-                paymentManager = paymentManager,
-                rate = merchantConfig.value!!.rate,
-                amount = merchantConfig.value!!.plan.amount
-            )
+                merchantConfig.value?.rate?.let {
+                    val convertedAmount = it.rate * amount.toDouble()
+                    val formattedAmount = numberFormatter.format(convertedAmount)
+                    Text(
+                        text = "Use one of the payment methods below to pay ${it.from} $formattedAmount to Spotflow",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color(0xFF9E9BA1),
+                        textAlign = TextAlign.Start,
+                        modifier = Modifier
+                            .padding(vertical = 27.dp, horizontal = 12.dp)
+                    )
+                }
 
-            merchantConfig.value?.rate?.let {
-                val amount = it.rate * merchantConfig.value!!.plan.amount.toDouble()
-                val formattedAmount = numberFormatter.format(amount)
                 Text(
-                    text = "Use one of the payment methods below to pay ${it.from} $formattedAmount to Spotflow",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color(0xFF9E9BA1),
-                    textAlign = TextAlign.Start,
+                    text = "Payment Options",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF6D6A73),
                     modifier = Modifier
-                        .padding(vertical = 27.dp, horizontal = 12.dp)
+                        .padding(top = 33.dp, start = 41.dp)
+                )
+                Divider(
+                    color = Color(0xFFE6E6E7),
+                    thickness = 0.5.dp,
+                    modifier = Modifier
+                        .padding(horizontal = 17.dp)
+                        .padding(top = 16.5.dp, bottom = 8.dp)
                 )
 
-            }
-
-            Text(
-                text = "Payment Options",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF6D6A73),
-                modifier = Modifier
-                    .padding(top = 33.dp, start = 41.dp)
-            )
-            Divider(
-                color = Color(0xFFE6E6E7),
-                thickness = 0.5.dp,
-                modifier = Modifier
-                    .padding(horizontal = 17.dp)
-                    .padding(top = 16.5.dp, bottom = 8.dp)
-            )
-
-            Column(
-                modifier = Modifier.padding(start = 16.dp)
-            ) {
-                // Replace with your actual navigation logic
-                PaymentOptionTile(
-                    title = "Pay with Card",
-                    imageRes = R.drawable.pay_with_card_icon,
-                    onTap = onPayWithCardClicked
-                )
-
-                PaymentOptionTile(
-                    title = "Pay with Transfer",
-                    imageRes = R.drawable.pay_with_transfer_icon,
-                    onTap = onPayWithTransferClicked
-
-                )
-
-                PaymentOptionTile(
-                    title = "Pay with USSD",
-                    imageRes = R.drawable.ussd_icon,
-                    onTap = onPayWithUSSDClicked
-                )
-            }
-            Spacer(modifier = Modifier.weight(2f))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 60.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
+                Column(
+                    modifier = Modifier.padding(start = 16.dp)
+                ) {
+                    PaymentOptionTile(
+                        title = "Pay with Card",
+                        imageRes = R.drawable.pay_with_card_icon,
+                        onTap = onPayWithCardClicked
+                    )
+                    PaymentOptionTile(
+                        title = "Pay with Transfer",
+                        imageRes = R.drawable.pay_with_transfer_icon,
+                        onTap = onPayWithTransferClicked
+                    )
+                    PaymentOptionTile(
+                        title = "Pay with USSD",
+                        imageRes = R.drawable.ussd_icon,
+                        onTap = onPayWithUSSDClicked
+                    )
+                }
+                Spacer(modifier = Modifier.weight(2f))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 60.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    CancelButton(
+                        onTap = onCancelButtonClicked
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                }
                 Spacer(modifier = Modifier.weight(1f))
-                CancelButton(
-                    onTap = onCancelButtonClicked
-                )
+                PciDssIcon()
                 Spacer(modifier = Modifier.weight(1f))
             }
-            Spacer(modifier = Modifier.weight(1f))
-            PciDssIcon()
-            Spacer(modifier = Modifier.weight(1f))
+
+
         }
     }
 
@@ -169,33 +174,34 @@ fun HomeView(
 }
 
 private fun getRate(
-    result: MutableState<com.spotflow.models.MerchantConfig?>,
+    result: MutableState<MerchantConfig?>,
     paymentManager: SpotFlowPaymentManager,
     loading: MutableState<Boolean>,
-    onRateFetched: (rate: com.spotflow.models.MerchantConfig) -> Unit
+    onRateFetched: (rate: MerchantConfig) -> Unit
 
 ) {
+
     val authToken = paymentManager.key
-    val retrofit = com.spotflow.core.ApiClient.getRetrofit(authToken)
-    val apiService = retrofit.create(com.spotflow.core.PaymentApi::class.java)
+    val retrofit = ApiClient.getRetrofit(authToken)
+    val apiService = retrofit.create(PaymentApi::class.java)
 
     loading.value = true
     val call =
-        apiService.getMerchantConfig(planId = paymentManager.planId)
+        apiService.getMerchantConfig(planId = null)
 
 
     // on below line we are executing our method.
-    call!!.enqueue(object : Callback<com.spotflow.models.MerchantConfig?> {
+    call!!.enqueue(object : Callback<MerchantConfig?> {
         override fun onResponse(
-            call: Call<com.spotflow.models.MerchantConfig?>,
-            response: retrofit2.Response<com.spotflow.models.MerchantConfig?>
+            call: Call<MerchantConfig?>,
+            response: retrofit2.Response<MerchantConfig?>
         ) {
             // this method is called when we get response from our api.
 
             if (response.code() == 200) {
                 // we are getting a response from our body and
                 // passing it to our model class.
-                val model: com.spotflow.models.MerchantConfig? = response.body()
+                val model: MerchantConfig? = response.body()
                 if (model != null) {
                     result.value = model
                     onRateFetched.invoke(model)
@@ -204,7 +210,7 @@ private fun getRate(
             loading.value = false
         }
 
-        override fun onFailure(call: Call<com.spotflow.models.MerchantConfig?>, t: Throwable) {
+        override fun onFailure(call: Call<MerchantConfig?>, t: Throwable) {
             loading.value = false
 
         }

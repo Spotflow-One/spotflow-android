@@ -7,13 +7,11 @@ import java.util.UUID
 data class ValidatePaymentRequestBody(
     val authorization: ValidatePaymentAuthorization,
     val reference: String,
-    val merchantId: String
 )
 
 data class AuthorizePaymentRequestBody(
     val authorization: AuthorizePaymentAuthorization,
     val reference: String,
-    val merchantId: String
 
 )
 
@@ -49,7 +47,6 @@ data class BankRequestBody (val code: String)
 data class AvsPaymentRequestBody(
     val reference: String,
     val authorization: AvsAuthorization,
-    val merchantId: String
 )
 
 data class Avs(
